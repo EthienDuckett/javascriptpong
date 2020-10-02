@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<canvas id="myCanvas" width="800" height="400">Your browser does not support the canvas tag. Try the newest version of Google Chrome</canvas>
+<script src="code1.js">
+    var canvas1 = document.getElementById("myCanvas");
+    var canvas = canvas1.getContext("2d");
+    canvas.font = "20px Arial";
+    var framerate = 60;
+    var resh=800;
+    var resv=400;
+    var wins=[0,0];
+    // determines who gets the ball
+    var recentwinner=Math.round(Math.random());
+    var ballcount=1;
+    var acceleration=.993;
+    var lowestspeed=5;
+
+    // Made by Ethien as an experiment, leave a comment on https://ejware.com if you enjoyed
+    // Key repeating in firefox is an awful way to take input, this method is so smooth...
+    // https://github.com/EthienDuckett
+    var paddlecollision=true;
+    // x location, y location, width, height, color, move rate, velocity
+    var paddle1=[40, 160, 20, 80, "cyan", 3, 0];
+    var paddle2=[740, 160, 20, 80, "red", 3, 0];
+    // this program is so poorly optimized, at least it has proper (I wrote this before I actually made the paddles) collision detection
+    // alert("Welcome to two player pong, player 1 is on the left and uses 1, 2. Player 2 is on the right and uses +/=, - (in case you don't have a number pad) Use space to add a ball.");
+    // this is a higher resolution version of pong, I know it doesn't meet any specifications really, I just did this as an experiment. The resolution is to scale though by coincidence
+    var ballList=[];
+    for (var j = 0; j < ballcount; j++) {
+        makeball();
+    }
+
+    // this controls the entire program
+    setInterval(everything,1000/framerate);
+    document.addEventListener("keydown", keyPressed1);
+    document.addEventListener("keyup", keyReleased1);
+    // keydown and click, keyup?
+
+    function everything(){
+        drawrectangle(0,0,resh,resv,"black");
+        updateballs();
+        if (paddle2[1] > 0 && paddle2[6] == -1){
+            paddle2[1]-=paddle2[5];
+        } else if (paddle2[1]+paddle2[3] < resv && paddle2[6] == 1){
+            paddle2[1]+=paddle2[5];
+        }
+        if (paddle1[1] > 0 && paddle1[6] == -1){
+            paddle1[1]-=paddle1[5];
+        } else if (paddle1[1]+paddle1[3] < resv && paddle1[6] == 1){
+            paddle1[1]+=paddle1[5];
+        }
+        drawrectangle(paddle1[0], paddle1[1], paddle1[2], paddle1[3], paddle1[4]);
+        drawrectangle(paddle2[0], paddle2[1], paddle2[2], paddle2[3], paddle2[4]);
+        drawtext(100, 370, paddle1[4], "player 1: "+wins[0]);
+        drawtext(700, 370, paddle2[4], "player 2: "+wins[1]);
+    }
+
+    function updateballs(){
+        for (var j = 0; j < ballList.length; j++) {
+            a=ballList[j].move(j);
+            if (a !== true){
+                ballList[j].draw();
+            }
+            else {
+                if (j == 0){
+                    ballList.shift();
+                }
+                ballList.splice(j, j);
+                ballcount-=1;
+                j=0;
+            }
+        }
+        console.log(ballList.length)
+    }
+    function keyPressed1(evt){
+        console.log(evt);
+        // 32 is spacebar
+        if (evt.key === ' ') {
+            makeball();
+            ballcount+=1;
+        } else if (evt.key === '+') {
+            paddle2[6]=1;
+        } else if (evt.key === '-') {
+            paddle2[6]=-1;
+        } else if (evt.key === '1') {
+            paddle1[6]=1;
+        } else if (evt.key === '2') {
+            paddle1[6]=-1;
+        }
+    }
+    function keyReleased1(evt){
+        if (evt.key === '+') {
+            paddle2[6]=0;
+        } else if (evt.key === '-') {
+            paddle2[6]=0;
+        } else if (evt.key === '1') {
+            paddle1[6]=0;
+        } else if (evt.key === '2') {
+            paddle1[6]=0;
+        }
+    }
+
+    function makeball(){
+        var tball = new ball();
+        ballList.push(tball);
+    }
+    // wow, javascript why are classes replaced with functions?
+    // *= -1 inverts the direction
+    // Also note that the circle has a 'hitbox' of a square but this will not be a problem due to the circle being inside of a square
+    function ball() {
+        // postion
+        this.radius = 10;
+        this.color = "white";
+        // this.x=400;
+        // this.y=200;
+        // If the ball starts in the wall, it is stuck forever
+        this.x=400;
+        this.y=200;
+        // this.x=Math.random()*(resh-20);
+        // this.y=Math.random()*(resv-20);
+        // velocity, angle that the ball travels at is influenced by this
+        this.vx=recentwinner==1?10:-10;
+        this.vy=5;
+
+        this.move = function(num) {
+
+            this.x+=this.vx;
+            this.y+=this.vy;
+
+            if (this.x-this.radius < 0) {
+                this.vx*=-1;
+                this.x=0+this.radius;
+                // ballList.splice(num, num);
+                // ballcount-=1;
+                wins[0]+=1;
+                recentwinner=0;
+                return true;
+            }
+            else if (this.x+this.radius > resh) {
+                this.vx*=-1;
+                this.x=resh-this.radius;
+                // ballList.splice(num, num);
+                // ballcount-=1;
+                wins[1]+=1;
+                recentwinner=1;
+                return true;
+            }
+            if (this.y-this.radius < 0) {
+                this.vy*=-1;
+                this.y=0+this.radius;
+            }
+            else if (this.y+this.radius > resv) {
+                this.vy*=-1;
+                this.y=resv-this.radius;
+            }
+
+            if (paddlecollision === true){
+                if ((this.y+this.radius > paddle1[1] && this.y+this.radius < paddle1[1]+paddle1[3]) || this.y-this.radius > paddle1[1] && this.y-this.radius < paddle1[1]+paddle1[3]) {
+                    if ((this.x+this.radius > paddle1[0] && this.x+this.radius < paddle1[0]+paddle1[2]) || this.x-this.radius > paddle1[0] && this.x-this.radius < paddle1[0]+paddle1[2]) {
+                        console.log("hit");
+                        this.vx*=-1;
+                        this.x=paddle1[0]+paddle1[2]+this.radius;
+                    }
+                }
+                if ((this.y+this.radius > paddle2[1] && this.y+this.radius < paddle2[1]+paddle2[3]) || this.y-this.radius > paddle2[1] && this.y-this.radius < paddle2[1]+paddle2[3]) {
+                    if ((this.x+this.radius > paddle2[0] && this.x+this.radius < paddle2[0]+paddle2[2]) || this.x-this.radius > paddle2[0] && this.x-this.radius < paddle2[0]+paddle2[2]) {
+                        console.log("hit");
+                        this.vx*=-1;
+                        this.x=paddle2[0]-this.radius;
+                    }
+                }
+            }
+            // code to detect if a ball hits another ball, still a work in progress
+            // for (var i = 0; i < ballcount; i++) {
+            //     // if (Math.abs((this.x)-ballList[i].x) < 20){
+            //     //     // console.log(ballList[1].x);
+            //     //     this.vx*=-1;
+            //     // }
+            //     // (this.y+this.radius < ballList[i].y+ballList[i].radius && this.y+this.radius > ballList[i].y-ballList[i].radius)
+            //     if (this.y-this.radius){
+            //         // console.log(Math.abs((this.y)-ballList[i].y));
+            //         this.vy*=-1;
+            //     }
+            // }
+            this.vx*=acceleration;
+            this.vy*=acceleration;
+            if (Math.abs(this.vx) < lowestspeed){
+                if (this.vx<0){
+                    this.vx=lowestspeed*-1;
+                }
+                else {
+                    this.vx=lowestspeed;
+                }
+            }
+            if (Math.abs(this.vy) < lowestspeed){
+                if (this.vy<0){
+                    this.vy=lowestspeed*-1;
+                }
+                else {
+                    this.vy=lowestspeed;
+                }
+            }
+            return false;
+        }
+        this.draw = function(){
+            drawcircle(this.x, this.y, this.radius, this.color);
+        }
+
+    }
+
+
+    function drawrectangle(x, y, width, height, color){
+        canvas.fillStyle = color;
+        canvas.fillRect(x, y, width, height);
+    }
+    function drawcircle(x, y, radius, color){
+        canvas.fillStyle = color;
+        canvas.beginPath();
+        canvas.arc(x, y, radius, 0, Math.PI*2, true);
+        canvas.fill();
+    }
+    function drawtext(x, y, color, text){
+        canvas.fillStyle=color;
+        canvas.fillText(text, x, y);
+    }
+
+</script>
+
+</body>
+</html>
