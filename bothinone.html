@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <canvas id="myCanvas" width="800" height="400">Your browser does not support the canvas tag. Try the newest version of Google Chrome</canvas>
-<script src="code1.js">
+<script>
     var canvas1 = document.getElementById("myCanvas");
     var canvas = canvas1.getContext("2d");
     canvas.font = "20px Arial";
@@ -52,7 +52,7 @@
         drawrectangle(paddle1[0], paddle1[1], paddle1[2], paddle1[3], paddle1[4]);
         drawrectangle(paddle2[0], paddle2[1], paddle2[2], paddle2[3], paddle2[4]);
         drawtext(100, 370, paddle1[4], "player 1: "+wins[0]);
-        drawtext(700, 370, paddle2[4], "player 2: "+wins[1]);
+        drawtext(670, 370, paddle2[4], "player 2: "+wins[1]);
     }
 
     function updateballs(){
@@ -78,7 +78,7 @@
         if (evt.key === ' ') {
             makeball();
             ballcount+=1;
-        } else if (evt.key === '+') {
+        } else if (evt.key === '+' || evt.key === '=') {
             paddle2[6]=1;
         } else if (evt.key === '-') {
             paddle2[6]=-1;
@@ -89,7 +89,7 @@
         }
     }
     function keyReleased1(evt){
-        if (evt.key === '+') {
+        if (evt.key === '+' || evt.key === '=') {
             paddle2[6]=0;
         } else if (evt.key === '-') {
             paddle2[6]=0;
